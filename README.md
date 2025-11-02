@@ -130,6 +130,21 @@ The system fetches a random fact, generates a caption and image, uploads the res
 
 ---
 
-=
+## Sample Outputs
+
+<img width="1024" height="1024" alt="Image" src="https://github.com/user-attachments/assets/60efbc5b-cf8a-466f-b3b9-cf6a927f7db7" />
+
+
+<img width="640" height="640" alt="Image" src="https://github.com/user-attachments/assets/8204f432-49e3-488b-ab64-23c9a3eacc20" />
+
+
+<img width="1024" height="1024" alt="Image" src="https://github.com/user-attachments/assets/cfd2801f-22fc-403f-baff-cde78a6dc8ec" />
+
+<img width="1024" height="1024" alt="Image" src="https://github.com/user-attachments/assets/bd7cc7ee-d2b6-4f34-939f-58daacf08cbf" />
+
+
+<img width="1024" height="1024" alt="Image" src="https://github.com/user-attachments/assets/28340502-594c-4e33-bcd9-873c77308e11" />
+
+<img width="1024" height="1024" alt="Image" src="https://github.com/user-attachments/assets/6fa113e9-5ecc-4026-bdf3-1b3e42435ee8" />
 
 > “A fully automated n8n workflow that creates, designs, and schedules AI-generated social media posts.”
