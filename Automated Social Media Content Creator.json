@@ -1,0 +1,424 @@
+{
+  "name": "posting",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-2.5-flash-image-preview:free\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Create a vivid Instagram image illustrating this fact: The sentence {{ $json.output.cleanedFact }}. At the bottom, add dark large, bold, evenly spaced text that is the fact itself, making the main statement easy to read. Highlight important words for emphasis.There should be no repitation,typos,spelling mistakes,etc.There should be consistency in highlighted word.Dont add anything else like watermark.\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "de21cd9c-220c-4ce1-ab17-e6265280d6f7",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        352,
+        384
+      ],
+      "id": "bbd9f43e-580f-4d33-bcc0-692f036c7e39",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Gu8LXMblgSFvkgDY",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "480674fe-1d51-433c-8428-654882e8b881",
+              "name": "base64",
+              "value": "={{ $json.choices[0].message.images[0].image_url.url.split(\",\")[1] }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1408,
+        0
+      ],
+      "id": "7b4cfda6-50b2-40bb-bbd4-16180a3f2af2",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the base64 string from previous node (adjust path if needed)\nlet base64String =$input.first().json.base64 ;\n\n// Remove prefix if present (like \"data:image/png;base64,\")\nbase64String = base64String.replace(/^data:image\\/\\w+;base64,/, \"\");\n\n// Create binary buffer\nconst buffer = Buffer.from(base64String, 'base64');\n\n\n// Return binary item correctly\nreturn [\n  {\n    json: {}, // keep json empty if not needed\n    binary: {\n      data: {\n        data: buffer.toString('base64'),\n        mimeType: 'image/png',\n        fileName: `${$now}.png`,\n      },\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        0
+      ],
+      "id": "487343d4-aedd-426d-ae33-c5f25d565731",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.imgbb.com/1/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "image",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1856,
+        0
+      ],
+      "id": "a1f5acac-03dc-41ac-afcb-4e2574efe233",
+      "name": "Upload Image",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "rRM1ULMU2eclBXXY",
+          "name": "IMAGEBB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"title\": \"description\",\n\t\"cleanedFact\": \"clean fact with correct json syntax\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        224
+      ],
+      "id": "593f87d4-8e97-4080-94af-b4c2d99d17ee",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "content": "Getting random fact\n",
+        "height": 368,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        -144
+      ],
+      "typeVersion": 1,
+      "id": "6ae054c3-8e79-4104-a531-e290e4223b4b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://uselessfacts.jsph.pl/api/v2/facts/today",
+        "options": {}
+      },
+      "name": "Get Random Fact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "0427450c-14d6-4eeb-b8dc-72ad3c7948c2"
+    },
+    {
+      "parameters": {
+        "content": "Writing Description and formating fact\n",
+        "height": 736,
+        "width": 544,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        -144
+      ],
+      "typeVersion": 1,
+      "id": "e0f44ce5-b154-43b3-834e-00476e40562c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Generating Image And Its Link\n\n",
+        "height": 400,
+        "width": 960,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1040,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "afc48c58-ed59-4a77-8c0d-ef9801a48bbd",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -528,
+        0
+      ],
+      "id": "59692173-34ee-46f0-ab03-fec4857af223",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1efUY9WahelwcFBZng7hqa_FboHXRyEVxTLcvCyotKZ0",
+          "mode": "list",
+          "cachedResultName": "postingSheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1efUY9WahelwcFBZng7hqa_FboHXRyEVxTLcvCyotKZ0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1efUY9WahelwcFBZng7hqa_FboHXRyEVxTLcvCyotKZ0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Image": "={{ $json.data.url }}",
+            "Description": "={{ $('Description and Clean').item.json.output.title }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image",
+              "displayName": "Image",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2160,
+        0
+      ],
+      "id": "989e0d59-4faa-4e39-92d6-ed5599b8427d",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy72ERPSmONtqu24",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an expert social media content creator. For the fact provided in the user's message, generate the following outputs:\n\nInstagram Caption: A short, engaging caption (50-120 words) that starts with a hook, explains the fact in a conversational and professional tone, and includes 3-5 trendy hashtags (e.g., #DidYouKnow, #FunFact).\n\nClean Fact: An updated version of the fact where any double quotes \" are escaped as \\\" to ensure valid JSON formatting.\n\nOutput the result as a single JSON object with exactly two fields:\n\n{\n \"Title\": \"<Instagram caption here>\",\n \"CleanFact\": \"<JSON-safe fact here>\"\n}\n\n\nInstructions/Notes:\n\nDo not include any extra text outside the JSON object.\n\nMake sure the CleanFact field is fully JSON-compliant.\n\nKeep the caption short, engaging, and professional."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3029cf92-60f4-4989-8d23-caf9107159d0",
+      "name": "Description and Clean"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Description and Clean",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Upload Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Description and Clean",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Random Fact": {
+      "main": [
+        [
+          {
+            "node": "Description and Clean",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Random Fact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Description and Clean": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "778df7fb-033c-43cf-bb71-e59607bed94d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "ghQPS7HgXBxTqbnX",
+  "tags": []
+}
